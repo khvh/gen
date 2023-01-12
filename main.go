@@ -75,6 +75,7 @@ func main() {
 
 	for _, item := range ents.Entities {
 		tmpl, err := template.New("").Funcs(sprig.FuncMap()).ParseFS(mainTemplate, "main.tmpl")
+
 		if err != nil {
 			log.Fatal(err)
 		}
