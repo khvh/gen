@@ -1,0 +1,251 @@
+package entities
+
+{{ $imports := list }}
+
+{{ $all := list "" }}
+
+{{ range .Fields -}}
+	{{ $all = append $all .Type }}
+{{ end -}}
+
+{{ range .Sub -}}
+	{{ range .Fields -}}
+		{{ $all = append $all .Type }}
+	{{ end -}}
+{{ end -}}
+
+{{ range $all }}
+	{{ if eq . "time.Time" }}
+		{{ $imports = append $imports "time" }}
+	{{end}}
+
+	{{ if eq . "*time.Time" }}
+		{{ $imports = append $imports "time" }}
+	{{end}}
+
+	{{ if eq . "uuid" }}
+		{{ $imports = append $imports "github.com/google/uuid" }}
+	{{end}}
+
+	{{ if eq . "" }}
+		{{ $imports = append $imports "context" }}
+	{{ end }}
+{{ end -}}
+
+import (
+{{range $imports}}
+	"{{.}}"
+{{end}}
+)
+
+{{ $ref := .Ref }}
+{{ $ogFields := .Fields }}
+
+// {{ .Ref }} ...
+type {{ .Ref }} struct {
+	{{ range .Fields -}}
+		{{ .Ref }} {{ .Type }} `json:"{{ .Tag }}"`
+	{{ end -}}
+}
+
+// New{{ .Ref }} constructs a {{ .Ref }}
+func New{{ .Ref }}() *{{ .Ref }} {
+	return &{{ .Ref }}{}
+}
+
+// New{{ .Ref }}WithValues constructs a {{ .Ref }} (using provided values)
+func New{{ .Ref }}WithValues(
+	{{ range .Fields  -}}
+	{{ .Tag }} {{ .Type }},
+	{{ end -}}
+) *{{ .Ref }} {
+	return New{{ .Ref }}(){{ range .Fields  -}}.Set{{ .Ref }}({{ .Tag }}){{ end -}}
+}
+
+// New{{ .Ref }}WithStruct constructs a {{ .Ref }} (using provided struct)
+func New{{ .Ref }}WithStruct(data *{{ .Ref }}) *{{ .Ref }} {
+	o := New{{ .Ref }}()
+
+	if data != nil {
+	{{ range .Fields  -}}
+	o.Set{{ .Ref }}(data.{{ .Ref }})
+	{{ end -}}
+	}
+
+	return o
+}
+
+{{ range .Fields -}}
+// Set{{ .Ref }} sets {{ .Ref }} and returns {{ $ref }}
+func (e *{{ $ref }}) Set{{ .Ref }}({{ .Tag }} {{ .Type }}) *{{ $ref }} {
+	{{ if hasPrefix "*" .Type }}
+		if {{ .Tag }} != nil {
+			e.{{ .Ref }} = {{ .Tag }}
+		}
+	{{ end }}
+	{{ if hasPrefix "string" .Type }}
+		if {{ .Tag }} != "" {
+			e.{{ .Ref }} = {{ .Tag }}
+		}
+	{{ end }}
+
+	return e
+}
+
+{{ end -}}
+
+{{ range .Sub -}}
+	{{ $r := .Ref }}
+	// {{ .Ref }} ...
+	type {{ .Ref }} struct {
+		{{ range .Fields -}}
+			{{ .Ref }} {{ .Type }} `json:"{{ .Tag }}"`
+		{{ end -}}
+	}
+
+	// New{{ .Ref }} constructs a {{ .Ref }}
+	func New{{ .Ref }}() *{{ .Ref }} {
+		return &{{ .Ref }}{}
+	}
+
+	// New{{ .Ref }}WithValues constructs a {{ .Ref }} (using provided values)
+	func New{{ .Ref }}WithValues(
+		{{ range .Fields  -}}
+		{{ .Tag }} {{ .Type }},
+		{{ end -}}
+	) *{{ .Ref }} {
+		return New{{ .Ref }}(){{ range .Fields  -}}.Set{{ .Ref }}({{ .Tag }}){{ end -}}
+	}
+
+	// New{{ .Ref }}WithStruct constructs a {{ .Ref }} (using provided struct)
+	func New{{ .Ref }}WithStruct(data *{{ .Ref }}) *{{ .Ref }} {
+		o := New{{ .Ref }}()
+
+		if data != nil {
+		{{ range .Fields  -}}
+		o.Set{{ .Ref }}(data.{{ .Ref }})
+		{{ end -}}
+		}
+
+		return o
+	}
+
+	// Map{{ .Ref }}To{{ $ref }} maps {{ .Ref }} to {{ $ref }}
+	func Map{{ .Ref }}To{{ $ref }}(data *{{ .Ref }}) *{{ $ref }} {
+		return New{{ $ref }}WithStruct(&{{ $ref }}{
+			{{ range .Fields  -}}
+			{{ .Ref }}: data.{{ .Ref }},
+			{{ end -}}
+		})
+	}
+
+	// Map{{ $ref }}To{{ .Ref }} maps {{ $ref }} to {{ .Ref }}
+	func Map{{ $ref }}To{{ .Ref }}(data *{{ $ref }}) *{{ .Ref }} {
+		return New{{ .Ref }}WithStruct(&{{ .Ref }}{
+			{{ range .Fields  -}}
+				{{ .Ref }}: data.{{ .Ref }},
+			{{ end -}}
+		})
+	}
+
+	{{ range .Fields -}}
+		// Set{{ .Ref }} sets {{ .Ref }} and returns {{ $r }}
+		func (e *{{ $r }}) Set{{ .Ref }}({{ .Tag }} {{ .Type }}) *{{ $r }} {
+			{{ if hasPrefix "*" .Type }}
+			if {{ .Tag }} != nil {
+				e.{{ .Ref }} = {{ .Tag }}
+			}
+			{{ end }}
+			{{ if hasPrefix "string" .Type }}
+			if {{ .Tag }} != "" {
+				e.{{ .Ref }} = {{ .Tag }}
+			}
+			{{ end }}
+
+			return e
+		}
+
+	{{ end -}}
+
+	func mock{{ .Ref }}() {{ .Ref }} {
+		return {{ .Ref }}{}
+	}
+
+{{end -}}
+
+// {{ .Ref }}Service ...
+type {{ .Ref }}Service interface {
+{{ range .Services -}}
+	{{ .ID }}(context.Context, {{ range .In -}} {{ .Type }} {{ end -}}) ({{ .Out }}, error)
+{{end -}}
+}
+
+// {{ .Ref }}Repository ...
+type {{ .Ref }}Repository interface {
+	Create(context.Context, {{ .Ref }}) ({{ .Ref }}, error)
+	ByID(context.Context, string) ({{ .Ref }}, error)
+	UpdateByID(context.Context, string, {{ .Ref }}) ({{ .Ref }}, error)
+	DeleteByID(context.Context, string) error
+	ListAll(context.Context) ([]{{ .Ref }}, error)
+	ListWithPagination(context.Context, int, int) ([]{{ .Ref }}, error)
+	ListWithPaginationAndFilter(context.Context, int, int, interface{}) ([]{{ .Ref }}, error)
+	ListWithStringQuery(context.Context, string) ([]{{ .Ref }}, error)
+	ListWithQuery(context.Context, interface{}) ([]{{ .Ref }}, error)
+}
+
+// {{ .Ref }}MockRepository ...
+type {{ .Ref }}MockRepository struct {}
+
+// New{{ .Ref }}MockRepository ...
+func New{{ .Ref }}MockRepository() *{{ .Ref }}MockRepository {
+	return &{{ .Ref }}MockRepository{}
+}
+
+// Create ...
+func (r *{{ .Ref }}MockRepository) Create(context.Context, {{ .Ref }}) (*{{ .Ref }}, error) {
+	return mock{{ .Ref }}(), nil
+}
+
+// ByID ...
+func (r *{{ .Ref }}MockRepository) ByID(context.Context, string) (*{{ .Ref }}, error) {
+	return mock{{ .Ref }}(), nil
+}
+
+// UpdateByID ...
+func (r *{{ .Ref }}MockRepository) UpdateByID(context.Context, string, {{ .Ref }}) (*{{ .Ref }}, error) {
+	return mock{{ .Ref }}(), nil
+}
+
+// DeleteByID ...
+func (r *{{ .Ref }}MockRepository) DeleteByID(context.Context, string) error {
+	return nil
+}
+
+// ListAll ...
+func (r *{{ .Ref }}MockRepository) ListAll(context.Context) ([]*{{ .Ref }}, error) {
+	return []*{{ .Ref }}{mock{{ .Ref }}()}, nil
+}
+
+// ListWithPagination ...
+func (r *{{ .Ref }}MockRepository) ListWithPagination(context.Context, int, int) ([]*{{ .Ref }}, error) {
+	return []*{{ .Ref }}{mock{{ .Ref }}()}, nil
+}
+
+// ListWithPaginationAndFilter ...
+func (r *{{ .Ref }}MockRepository) ListWithPaginationAndFilter(context.Context, int, int, interface{}) ([]*{{ .Ref }}, error) {
+	return []*{{ .Ref }}{mock{{ .Ref }}()}, nil
+}
+
+// ListWithStringQuery ...
+func (r *{{ .Ref }}MockRepository) ListWithStringQuery(context.Context, string) ([]*{{ .Ref }}, error) {
+	return []*{{ .Ref }}{mock{{ .Ref }}()}, nil
+}
+
+// ListWithQuery ...
+func (r *{{ .Ref }}MockRepository) ListWithQuery(context.Context, interface{}) ([]*{{ .Ref }}, error) {
+	return []*{{ .Ref }}{mock{{ .Ref }}()}, nil
+}
+
+func mock{{ .Ref }}() *{{ .Ref }} {
+	return New{{ .Ref }}()
+}

@@ -1,0 +1,59 @@
+entities:
+  - ref: Sample
+    fields:
+      - ref: ID
+        type: string
+        tag: _id
+        required: true
+      - ref: Key
+        type: string
+        tag: _key
+        required: true
+      - ref: Title
+        type: string
+        tag: title
+        required: false
+  - ref: Example
+    fields:
+      - ref: ID
+        type: string
+        tag: id
+        required: true
+      - ref: Name
+        type: string
+        tag: name
+        required: false
+      - ref: CreatedAt
+        tag: createdAt
+        type: time.Time
+        required: false
+    sub:
+      - ref: ExampleFilter
+        fields:
+          - ref: ID
+            tag: id
+            type: string
+            required: false
+      - ref: ListExample
+        fields:
+          - ref: ID
+            tag: id
+            type: string
+            required: false
+          - ref: Name
+            tag: name
+            type: string
+            required: false
+    services:
+      - id: FindExample
+        in:
+          - tag: id
+            type: string
+            required: false
+        out: Example
+      - id: ListEntities
+        in:
+          - tag: filter
+            type: "*ExampleFilter"
+            required: false
+        out: "[]*ListExample"

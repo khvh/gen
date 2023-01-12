@@ -1,0 +1,10 @@
+config.yml
+.env
+tmp/
+!.gitkeep
+
+ui/dist/*
+!ui/dist/.gitkeep.idea
+.DS_Store
+tmp/
+.idea/
