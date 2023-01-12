@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"embed"
 	"flag"
 	"fmt"
 	"go/format"
@@ -42,6 +43,9 @@ var (
 	in, out string
 )
 
+//go:embed main.tmpl
+var mainTemplate embed.FS
+
 func main() {
 	flag.StringVar(&in, "in", "spec.yml", "Spec file")
 	flag.StringVar(&out, "out", "internal/generated", "Output dir")
@@ -70,7 +74,10 @@ func main() {
 	// tmpl := template.Must(template.New("main").Funcs(sprig.FuncMap()).ParseFiles("main.tmpl"))
 
 	for _, item := range ents.Entities {
-		tmpl, _ := template.New("").Funcs(sprig.FuncMap()).ParseFiles("main.tmpl")
+		tmpl, err := template.New("").Funcs(sprig.FuncMap()).ParseFS(mainTemplate, "main.tmpl")
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		var processed bytes.Buffer
 
