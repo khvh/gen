@@ -8,3 +8,4 @@ ui/dist/*
 .DS_Store
 tmp/
 .idea/
+internal/generated/
